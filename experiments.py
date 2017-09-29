@@ -877,7 +877,8 @@ def outputFeatureMap(sess, x, keep_prob, keep_prob_value, image_input, tf_activa
 
 
 def plot_feature_map(in_features, in_classes, model_config,
-                     keep_prob_value=1.0, model_name="lenet", desc=None, output_dir=OUTPUT_DIRECTORY):
+                     keep_prob_value=1.0, load_model=True, conv_name="conv1",
+                     model_name="lenet", desc=None, output_dir=OUTPUT_DIRECTORY):
     print("Calculate probability model {}".format(model_name))
 
     if desc is None:
@@ -890,12 +891,24 @@ def plot_feature_map(in_features, in_classes, model_config,
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        saver.restore(sess, model_file)
+        if load_model:
+            saver.restore(sess, model_file)
         sess = tf.get_default_session()
-        # {"conv1": conv1, "conv2": conv2, "fc0": fc0, "fc1": fc1, "fc2": fc2, "logits": logits}
-        outputFeatureMap(sess, x, keep_prob, keep_prob_value, in_features, cnn_params["conv2"])
+        outputFeatureMap(sess, x, keep_prob, keep_prob_value, in_features, cnn_params[conv_name])
 
 
 plot_feature_map(new_features_normalized, new_classes, model_config=model_multi_dropouts_before45_config,
                  desc="NDR 45 Grayscale normalized (New Images)",
-                 model_name="ndr45_train_images_normalized_model")
+                 model_name="ndr45_train_images_normalized_model", load_model=False, conv_name="conv1")
+
+plot_feature_map(new_features_normalized, new_classes, model_config=model_multi_dropouts_before45_config,
+                 desc="NDR 45 Grayscale normalized (New Images)",
+                 model_name="ndr45_train_images_normalized_model", conv_name="conv1")
+
+plot_feature_map(new_features_normalized, new_classes, model_config=model_multi_dropouts_before45_config,
+                 desc="NDR 45 Grayscale normalized (New Images)",
+                 model_name="ndr45_train_images_normalized_model", load_model=False, conv_name="conv2")
+
+plot_feature_map(new_features_normalized, new_classes, model_config=model_multi_dropouts_before45_config,
+                 desc="NDR 45 Grayscale normalized (New Images)",
+                 model_name="ndr45_train_images_normalized_model", conv_name="conv2")
