@@ -900,15 +900,13 @@ def plot_feature_map(in_features, in_classes, model_config,
 plot_feature_map(new_features_normalized, new_classes, model_config=model_multi_dropouts_before45_config,
                  desc="NDR 45 Grayscale normalized (New Images)",
                  model_name="ndr45_train_images_normalized_model", load_model=False, conv_name="conv1")
-
-plot_feature_map(new_features_normalized, new_classes, model_config=model_multi_dropouts_before45_config,
-                 desc="NDR 45 Grayscale normalized (New Images)",
-                 model_name="ndr45_train_images_normalized_model", conv_name="conv1")
-
 plot_feature_map(new_features_normalized, new_classes, model_config=model_multi_dropouts_before45_config,
                  desc="NDR 45 Grayscale normalized (New Images)",
                  model_name="ndr45_train_images_normalized_model", load_model=False, conv_name="conv2")
 
+plot_feature_map(new_features_normalized, new_classes, model_config=model_multi_dropouts_before45_config,
+                 desc="NDR 45 Grayscale normalized (New Images)",
+                 model_name="ndr45_train_images_normalized_model", conv_name="conv1")
 plot_feature_map(new_features_normalized, new_classes, model_config=model_multi_dropouts_before45_config,
                  desc="NDR 45 Grayscale normalized (New Images)",
                  model_name="ndr45_train_images_normalized_model", conv_name="conv2")
