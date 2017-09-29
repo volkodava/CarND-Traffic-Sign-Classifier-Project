@@ -1,6 +1,4 @@
-data
-.ipynb_checkpoints
-*.h5
-models
-*.swp
-*.p
+.DS_Store
+.ipynb_checkpoints/
+.idea/
+output*/
