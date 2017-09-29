@@ -577,7 +577,7 @@ def lenetMultiDropoutsBefore45(x, keep_prob, n_classes):
     # logits = tf.matmul(fc2, fc3_W) + fc3_b
     logits = tf.matmul(dr1, fc3_W) + fc3_b
 
-    return logits
+    return logits, {"conv1": conv1, "conv2": conv2, "fc0": fc0, "fc1": fc1, "fc2": fc2, "logits": logits}
 
 
 def evaluate(X_data, y_data, accuracy_operation, x, y, keep_prob, keep_prob_value=1.0):
@@ -599,7 +599,7 @@ def train_model(train_features, train_classes, valid_features, valid_classes, mo
     if desc is None:
         desc = model_name
 
-    x, y, keep_prob, logits, training_operation, accuracy_operation = model_config()
+    x, y, keep_prob, logits, training_operation, accuracy_operation, cnn_params = model_config()
     saver = tf.train.Saver()
 
     results = []
@@ -638,7 +638,7 @@ def calc_top_k(new_features, new_classes, model_config, top_k_value=5,
 
     model_file = os.path.join(output_dir, model_name)
 
-    x, y, keep_prob, logits, training_operation, accuracy_operation = model_config()
+    x, y, keep_prob, logits, training_operation, accuracy_operation, cnn_params = model_config()
     saver = tf.train.Saver()
 
     with tf.Session() as sess:
@@ -659,7 +659,7 @@ def calc_probability(new_features, new_classes, model_config,
 
     model_file = os.path.join(output_dir, model_name)
 
-    x, y, keep_prob, logits, training_operation, accuracy_operation = model_config()
+    x, y, keep_prob, logits, training_operation, accuracy_operation, cnn_params = model_config()
     saver = tf.train.Saver()
 
     with tf.Session() as sess:
@@ -679,7 +679,7 @@ def model_multi_dropouts_before45_config():
     one_hot_y = tf.one_hot(y, n_classes)
     keep_prob = tf.placeholder(tf.float32, name="keep_prob")
     rate = 0.001
-    logits = lenetMultiDropoutsBefore45(x, keep_prob, n_classes)
+    logits, cnn_params = lenetMultiDropoutsBefore45(x, keep_prob, n_classes)
 
     cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=one_hot_y, logits=logits)
     loss_operation = tf.reduce_mean(cross_entropy)
@@ -688,7 +688,7 @@ def model_multi_dropouts_before45_config():
     correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(one_hot_y, 1))
     accuracy_operation = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-    return x, y, keep_prob, logits, training_operation, accuracy_operation
+    return x, y, keep_prob, logits, training_operation, accuracy_operation, cnn_params
 
 
 model_metrics_file = os.path.join(OUTPUT_DIRECTORY, "model_metrics.pickle")
@@ -763,8 +763,11 @@ test_features_predicted_classes = calc_probability(test_images_normalized, y_tes
                                                    model_config=model_multi_dropouts_before45_config,
                                                    desc="NDR 45 Grayscale normalized (Test)",
                                                    model_name="ndr45_train_images_normalized_model")
+
 print_confusion_matrix(confusion_matrix(y_test, test_features_predicted_classes), y_test, order_desc=True)
-plot_confusion_matrix(confusion_matrix(y_test, test_features_predicted_classes))
+
+
+# plot_confusion_matrix(confusion_matrix(y_test, test_features_predicted_classes))
 
 
 def plot_top_k(in_features, in_classes, top_k):
@@ -833,7 +836,8 @@ new_features_normalized = normalize_images(new_features)
 # plot_features(new_images_normalized, new_labels, title="Normalized Random Images")
 
 print("Test new images")
-new_features_predicted_classes = calc_probability(new_features_normalized, new_classes,
+new_features_predicted_classes = calc_probability(new_features_normalized,
+                                                  new_classes,
                                                   model_config=model_multi_dropouts_before45_config,
                                                   desc="NDR 45 Grayscale normalized (New Images)",
                                                   model_name="ndr45_train_images_normalized_model")
@@ -844,4 +848,54 @@ top_k_results = calc_top_k(new_features_normalized, new_classes,
                            desc="NDR 45 Grayscale normalized (New Images)",
                            model_name="ndr45_train_images_normalized_model")
 
-plot_top_k(new_features_normalized, new_classes, top_k_results)
+
+# plot_top_k(new_features_normalized, new_classes, top_k_results)
+
+def outputFeatureMap(sess, x, keep_prob, keep_prob_value, image_input, tf_activation, activation_min=-1,
+                     activation_max=-1, plt_num=1):
+    # Here make sure to preprocess your image_input in a way your network expects
+    # with size, normalization, ect if needed
+    # image_input =
+    # Note: x should be the same name as your network's tensorflow data placeholder variable
+    # If you get an error tf_activation is not defined it may be having trouble accessing the variable from inside a function
+    activation = tf_activation.eval(session=sess, feed_dict={x: image_input, keep_prob: keep_prob_value})
+    featuremaps = activation.shape[3]
+    plt.figure(plt_num, figsize=(15, 15))
+    for featuremap in range(featuremaps):
+        plt.subplot(6, 8, featuremap + 1)  # sets the number of feature maps to show on each row and column
+        plt.title('FeatureMap ' + str(featuremap))  # displays the feature map number
+        if activation_min != -1 & activation_max != -1:
+            plt.imshow(activation[0, :, :, featuremap], interpolation="nearest", vmin=activation_min,
+                       vmax=activation_max, cmap="gray")
+        elif activation_max != -1:
+            plt.imshow(activation[0, :, :, featuremap], interpolation="nearest", vmax=activation_max, cmap="gray")
+        elif activation_min != -1:
+            plt.imshow(activation[0, :, :, featuremap], interpolation="nearest", vmin=activation_min, cmap="gray")
+        else:
+            plt.imshow(activation[0, :, :, featuremap], interpolation="nearest", cmap="gray")
+    plt.show()
+
+
+def plot_feature_map(in_features, in_classes, model_config,
+                     keep_prob_value=1.0, model_name="lenet", desc=None, output_dir=OUTPUT_DIRECTORY):
+    print("Calculate probability model {}".format(model_name))
+
+    if desc is None:
+        desc = model_name
+
+    model_file = os.path.join(output_dir, model_name)
+
+    x, y, keep_prob, logits, training_operation, accuracy_operation, cnn_params = model_config()
+    saver = tf.train.Saver()
+
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        saver.restore(sess, model_file)
+        sess = tf.get_default_session()
+        # {"conv1": conv1, "conv2": conv2, "fc0": fc0, "fc1": fc1, "fc2": fc2, "logits": logits}
+        outputFeatureMap(sess, x, keep_prob, keep_prob_value, in_features, cnn_params["conv2"])
+
+
+plot_feature_map(new_features_normalized, new_classes, model_config=model_multi_dropouts_before45_config,
+                 desc="NDR 45 Grayscale normalized (New Images)",
+                 model_name="ndr45_train_images_normalized_model")
