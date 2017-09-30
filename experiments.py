@@ -795,18 +795,7 @@ new_classes = np.array(new_classes)
 
 assert new_features.shape[1:] == X_train.shape[1:]
 
-new_features_to_plot = []
-new_classes_to_plot = []
-for idx, class_id in enumerate(new_classes):
-    class_indexes = np.where(y_test == class_id)[0]
-    new_features_to_plot.append(X_test[class_indexes][0].squeeze())
-    new_classes_to_plot.append(class_id)
-
-new_features_to_plot = np.array(new_features_to_plot)
-new_classes_to_plot = np.array(new_classes_to_plot)
-
-plot_two_feature_sets(new_features_to_plot.astype(np.uint8), new_classes_to_plot, new_features.astype(np.uint8),
-                      new_classes, title="Original/Random")
+plot_features(new_features.astype(np.uint8), new_classes, title="Random Images")
 
 new_features_normalized = normalize_images(new_features)
 
