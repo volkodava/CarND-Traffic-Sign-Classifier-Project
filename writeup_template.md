@@ -42,7 +42,7 @@ You're reading it! and here is a link to my [project code](./Traffic_Sign_Classi
 
 #### 1. Provide a basic summary of the data set. In the code, the analysis should be done using python, numpy and/or pandas methods rather than hardcoding results manually.
 
-I used python to calculate summary statistics of the traffic signs data set:
+I used python and numpy library to calculate summary statistics of the traffic signs data set:
 
 * The size of training set is 34799
 * The size of the validation set is 4410
@@ -53,6 +53,7 @@ I used python to calculate summary statistics of the traffic signs data set:
 #### 2. Include an exploratory visualization of the dataset.
 
 Here is an exploratory visualization of the data set. It is a bar chart showing how the data distribution of the training data. Each bar represents one class (traffic sign) and how many samples are in the class. The mapping of traffic sign names to class id can be found here: [signnames.csv](./signnames.csv)
+
 ![Train Data](./writeup/train_data_distribution.png)
 
 ### Design and Test a Model Architecture
@@ -62,16 +63,19 @@ Here is an exploratory visualization of the data set. It is a bar chart showing 
 As a first step, I decided to convert the images to grayscale because of reducing the amount of input data, training the model is significantly faster. The color of traffic signs should not be important for classification, because they are designed that even color blind people can identify them.
 
 Here is an example of a traffic sign image before and after grayscaling.
+
 ![alt text](./writeup/original_images.png)
+
 ![alt text](./writeup/grayscale_images.png)
 
 I normalized the data before training to make the training faster and reduce the chance of getting stuck in local optima.
 
 I decided to generate additional data to increase samples for training, which in turn would make training more robust. The newly generated dataset includes normalized original data, and newly generated data (by randomly introducing rotation, x-translation, y-translation, sheer factor and zoom factor to the original data).to increase samples for training, which in turn would make training more robust. The newly generated dataset includes normalized original data, and newly generated data (by randomly introducing rotation, x-translation, y-translation, sheer factor and zoom factor to the original data). The new dataset is balanced and had already been pre-processed for normalizing contrast and illumination.
 
-To add more data to the the data set, I used the following techniques because because I wanted to be careful not to produce an unrecognizable image.
+To add more data to the the data set, I used the following techniques because I wanted to be careful not to produce an unrecognizable images.
 
 Here is an example of an original image and an augmented image:
+
 ![Original/Augmented](./writeup/original_augmented_images.png)
 
 The difference between the original data set and the augmented data set is augmented data randomly rotated, x/y translated, sheer factored and zoom factored.
@@ -121,18 +125,23 @@ My final model results were:
 
 If an iterative approach was chosen:
 * What was the first architecture that was tried and why was it chosen?
+
 LeNet-5 shown in the udacity classroom
 
 * What were some problems with the initial architecture?
+
 Validation accuracy of about 90%, but the test accuracy was much lower (about 80%)
 
 * How was the architecture adjusted and why was it adjusted? Typical adjustments could include choosing a different model architecture, adding or taking away layers (pooling, dropout, convolution, etc), using an activation function or changing the activation function. One common justification for adjusting an architecture would be due to overfitting or underfitting. A high accuracy on the training set but low accuracy on the validation set indicates over fitting; a low accuracy on both sets indicates under fitting.
+
 Added few dropouts to make a model more generic, generate additional data to increase samples for training and did more image preprocessing such as Histogram Equalization to reduce noise in images and thus make the model more robust in predicting same images
 
 * Which parameters were tuned? How were they adjusted and why?
+
 None
 
 * What are some of the important design choices and why were they chosen? For example, why might a convolution layer work well with this problem? How might a dropout layer help with creating a successful model?
+
 I started trying with an high dropout rate 50% and this seemed to slow down overfitting: the model was slower to 
 train but also achieved a slightly higher accuracy in the end. 
 However, only When added the augmented dataset I started seeing strong increased performance as the model 
@@ -140,12 +149,15 @@ was now able to learn within a few epochs but at the same time to generalize wel
 
 If a well known architecture was chosen:
 * What architecture was chosen?
+
 LeNet-5 with few dropouts shown in the udacity classroom
 
 * Why did you believe it would be relevant to the traffic sign application?
-Yes, because traffic sign classifier works pretty well overall with the test set.
+
+Because traffic sign classifier works pretty well overall with the test set
 
 * How does the final model's accuracy on the training, validation and test set provide evidence that the model is working well?
+
 The network is producing better than 93% accuracy within 20 epochs on all 3 input sets
  
 
