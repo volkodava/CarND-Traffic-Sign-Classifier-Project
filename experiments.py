@@ -263,11 +263,11 @@ with open(training_file, mode='rb') as f:
 with open(validation_file, mode='rb') as f:
     valid = pickle.load(f)
 with open(testing_file, mode='rb') as f:
-    test = pickle.load(f)
+    train_setup = pickle.load(f)
 
 X_train, y_train = train['features'], train['labels']
 X_valid, y_valid = valid['features'], valid['labels']
-X_test, y_test = test['features'], test['labels']
+X_test, y_test = train_setup['features'], train_setup['labels']
 
 assert len(X_train) == len(y_train)
 assert len(X_valid) == len(y_valid)
@@ -741,7 +741,7 @@ def print_confusion_matrix(cm, cm_index_labels=None, classes_catalog=classes_cat
                                                np.around(np.std(total_accuracy), decimals=3)))
 
 
-train_setup = [
+train_setups = [
     partial(train_model, train_features=train_images_normalized, train_classes=y_train,
             valid_features=valid_images_normalized,
             valid_classes=y_valid, model_config=model_multi_dropouts_before45_config,
@@ -752,8 +752,8 @@ results = []
 if model_metrics_available():
     results = load_model_metrics()
 else:
-    for test in train_setup:
-        result = test()
+    for train_setup in train_setups:
+        result = train_setup()
         print("Result: ", result)
         results.append(result)
     print("Saving model metrics")
@@ -767,20 +767,25 @@ train_features_predicted_classes = calc_probability(train_images_normalized, y_t
                                                     model_config=model_multi_dropouts_before45_config,
                                                     desc="NDR 45 Grayscale normalized (Train)",
                                                     model_name="ndr45_train_images_normalized_model")
-print_confusion_matrix(confusion_matrix(y_train, train_features_predicted_classes), order_desc=True)
+train_features_cm = confusion_matrix(y_train, train_features_predicted_classes)
+print_confusion_matrix(train_features_cm, order_desc=True)
+plot_confusion_matrix(train_features_cm)
 
 valid_features_predicted_classes = calc_probability(valid_images_normalized, y_valid,
                                                     model_config=model_multi_dropouts_before45_config,
                                                     desc="NDR 45 Grayscale normalized (Valid)",
                                                     model_name="ndr45_train_images_normalized_model")
-print_confusion_matrix(confusion_matrix(y_valid, valid_features_predicted_classes), order_desc=True)
+valid_features_cm = confusion_matrix(y_valid, valid_features_predicted_classes)
+print_confusion_matrix(valid_features_cm, order_desc=True)
+plot_confusion_matrix(valid_features_cm)
 
 test_features_predicted_classes = calc_probability(test_images_normalized, y_test,
                                                    model_config=model_multi_dropouts_before45_config,
                                                    desc="NDR 45 Grayscale normalized (Test)",
                                                    model_name="ndr45_train_images_normalized_model")
-print_confusion_matrix(confusion_matrix(y_test, test_features_predicted_classes), order_desc=True)
-plot_confusion_matrix(confusion_matrix(y_test, test_features_predicted_classes))
+test_features_cm = confusion_matrix(y_test, test_features_predicted_classes)
+print_confusion_matrix(test_features_cm, order_desc=True)
+plot_confusion_matrix(test_features_cm)
 
 new_features_with_classes = [(resize_image(read_image(path)), int(basename(path).split(".")[-2])) for path in
                              glob.glob('images/*.jpg')]
@@ -790,23 +795,23 @@ new_classes = np.array(new_classes)
 
 assert new_features.shape[1:] == X_train.shape[1:]
 
-original_features = []
-original_classes = []
+new_features_to_plot = []
+new_classes_to_plot = []
 for idx, class_id in enumerate(new_classes):
     class_indexes = np.where(y_test == class_id)[0]
-    original_features.append(X_test[class_indexes][0].squeeze())
-    original_classes.append(class_id)
+    new_features_to_plot.append(X_test[class_indexes][0].squeeze())
+    new_classes_to_plot.append(class_id)
 
-original_features = np.array(original_features)
-original_classes = np.array(original_classes)
+new_features_to_plot = np.array(new_features_to_plot)
+new_classes_to_plot = np.array(new_classes_to_plot)
 
-plot_two_feature_sets(original_features.astype(np.uint8), original_classes, new_features.astype(np.uint8), new_classes,
-                      title="Original/Random")
+plot_two_feature_sets(new_features_to_plot.astype(np.uint8), new_classes_to_plot, new_features.astype(np.uint8),
+                      new_classes, title="Original/Random")
 
 new_features_normalized = normalize_images(new_features)
 
-plot_features(new_features.astype(np.uint8), new_classes, title="Original Random Images")
-plot_features(new_features_normalized, new_classes, title="Normalized Random Images")
+plot_features(new_features.astype(np.uint8), new_classes, title="Original Images")
+plot_features(new_features_normalized, new_classes, title="Normalized Images")
 
 new_features_predicted_classes = calc_probability(new_features_normalized,
                                                   new_classes,
@@ -816,8 +821,9 @@ new_features_predicted_classes = calc_probability(new_features_normalized,
 
 # cm_index_labels need to lookup for real class_id in confusion matrix
 # see: http://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html
-print_confusion_matrix(confusion_matrix(new_classes, new_features_predicted_classes, labels=new_classes),
-                       cm_index_labels=new_classes, order_desc=True)
+new_features_cm = confusion_matrix(new_classes, new_features_predicted_classes, labels=new_classes)
+print_confusion_matrix(new_features_cm, cm_index_labels=new_classes, order_desc=True)
+plot_confusion_matrix(new_features_cm)
 
 
 def plot_top_k(in_features, in_classes, top_k):
