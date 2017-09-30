@@ -574,12 +574,10 @@ def evaluate(X_data, y_data, accuracy_operation, x, y, keep_prob, keep_prob_valu
     return total_accuracy / num_examples
 
 
-def train_model(train_features, train_classes, valid_features, valid_classes, model_config, keep_prob_value=0.5,
-                model_name="lenet", desc=None, output_dir=OUTPUT_DIRECTORY):
+def train_model(train_features, train_classes, valid_features, valid_classes, model_config, desc, keep_prob_value=0.5,
+                model_name="lenet", output_dir=OUTPUT_DIRECTORY):
     print("Train model {}".format(model_name))
-
-    if desc is None:
-        desc = model_name
+    print(desc)
 
     x, y, keep_prob, logits, training_operation, accuracy_operation, cnn_params = model_config()
     saver = tf.train.Saver()
@@ -611,12 +609,10 @@ def train_model(train_features, train_classes, valid_features, valid_classes, mo
         return desc, np.array(results).T
 
 
-def evaluate_model(in_features, in_classes, model_config,
-                   keep_prob_value=1.0, model_name="lenet", desc=None, output_dir=OUTPUT_DIRECTORY):
+def evaluate_model(in_features, in_classes, model_config, desc,
+                   keep_prob_value=1.0, model_name="lenet", output_dir=OUTPUT_DIRECTORY):
     print("Evaluate model {}".format(model_name))
-
-    if desc is None:
-        desc = model_name
+    print(desc)
 
     model_file = os.path.join(output_dir, model_name)
 
@@ -629,12 +625,10 @@ def evaluate_model(in_features, in_classes, model_config,
         return evaluate(in_features, in_classes, accuracy_operation, x, y, keep_prob, keep_prob_value)
 
 
-def calc_top_k(in_features, in_classes, model_config, top_k_value=5,
-               keep_prob_value=1.0, model_name="lenet", desc=None, output_dir=OUTPUT_DIRECTORY):
+def calc_top_k(in_features, in_classes, model_config, desc, top_k_value=5,
+               keep_prob_value=1.0, model_name="lenet", output_dir=OUTPUT_DIRECTORY):
     print("Calculate top_k model {}".format(model_name))
-
-    if desc is None:
-        desc = model_name
+    print(desc)
 
     model_file = os.path.join(output_dir, model_name)
 
@@ -650,12 +644,10 @@ def calc_top_k(in_features, in_classes, model_config, top_k_value=5,
         return top_k_results
 
 
-def calc_probability(in_features, in_classes, model_config,
-                     keep_prob_value=1.0, model_name="lenet", desc=None, output_dir=OUTPUT_DIRECTORY):
+def calc_probability(in_features, in_classes, model_config, desc,
+                     keep_prob_value=1.0, model_name="lenet", output_dir=OUTPUT_DIRECTORY):
     print("Calculate probability model {}".format(model_name))
-
-    if desc is None:
-        desc = model_name
+    print(desc)
 
     model_file = os.path.join(output_dir, model_name)
 

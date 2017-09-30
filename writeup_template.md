@@ -53,7 +53,7 @@ I used python to calculate summary statistics of the traffic signs data set:
 #### 2. Include an exploratory visualization of the dataset.
 
 Here is an exploratory visualization of the data set. It is a bar chart showing how the data distribution of the training data. Each bar represents one class (traffic sign) and how many samples are in the class. The mapping of traffic sign names to class id can be found here: [signnames.csv](./signnames.csv)
-![Train Data][./writeup/train_data_distribution.png]
+![Train Data](./writeup/train_data_distribution.png)
 
 ### Design and Test a Model Architecture
 
@@ -62,8 +62,8 @@ Here is an exploratory visualization of the data set. It is a bar chart showing 
 As a first step, I decided to convert the images to grayscale because of reducing the amount of input data, training the model is significantly faster. The color of traffic signs should not be important for classification, because they are designed that even color blind people can identify them.
 
 Here is an example of a traffic sign image before and after grayscaling.
-![alt text][./writeup/original_images.png]
-![alt text][./writeup/grayscale_images.png]
+![alt text](./writeup/original_images.png)
+![alt text](./writeup/grayscale_images.png)
 
 I normalized the data before training to make the training faster and reduce the chance of getting stuck in local optima.
 
@@ -72,7 +72,7 @@ I decided to generate additional data to increase samples for training, which in
 To add more data to the the data set, I used the following techniques because because I wanted to be careful not to produce an unrecognizable image.
 
 Here is an example of an original image and an augmented image:
-![Original/Augmented][./writeup/original_augmented_images.png]
+![Original/Augmented](./writeup/original_augmented_images.png)
 
 The difference between the original data set and the augmented data set is augmented data randomly rotated, x/y translated, sheer factored and zoom factored.
 
@@ -155,7 +155,7 @@ The network is producing better than 93% accuracy within 20 epochs on all 3 inpu
 
 Here are five German traffic signs that I found on the web:
 
-![Random Images][./writeup/random_images_from_internet.png]
+![Random Images](./writeup/random_images_from_internet.png)
 
 #### 2. Discuss the model's predictions on these new traffic signs and compare the results to predicting on the test set. At a minimum, discuss what the predictions were, the accuracy on these new predictions, and compare the accuracy to the accuracy on the test set (OPTIONAL: Discuss the results in more detail as described in the "Stand Out Suggestions" part of the rubric).
 
@@ -178,7 +178,7 @@ The code for making predictions on my final model is located in the 31st cell of
 
 The top five soft max probabilities were:
 
-![Random Images Prediction][./writeup/top5_new_image_prediction.png]
+![Random Images Prediction](./writeup/top5_new_image_prediction.png)
 
 ### (Optional) Visualizing the Neural Network (See Step 4 of the Ipython notebook for more details)
 #### 1. Discuss the visual output of your trained network's feature maps. What characteristics did the neural network use to make classifications?
@@ -187,14 +187,14 @@ The code for visualizing the Neural Network is located in the 34th cell of the I
 
 Image input:
 
-![Image Input][./writeup/visual_image_input.png]
+![Image Input](./writeup/visual_image_input.png)
 
 Untrained model feature map:
 
-![Untrained Model][./writeup/visual_untrained_image.png]
+![Untrained Model](./writeup/visual_untrained_image.png)
 
 Tained model feature map:
 
-![Trained Model][./writeup/visual_trained_image.png]
+![Trained Model](./writeup/visual_trained_image.png)
 
 On the first picture with untrained model we can see some noisy patterns, which can be an indicator of a network that hasn't been trained. On the second picture with trained model we can see nice and smooth patterns without any noise.
