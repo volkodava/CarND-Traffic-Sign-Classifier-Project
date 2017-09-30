@@ -87,17 +87,13 @@ def read_csv(filepath, skip_header=True):
 
 
 def save_obj(obj, outfile):
-    # np.save(outfile, obj)
     with open(outfile, 'wb') as f:
         pickle.dump(obj, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def load_obj(outfile):
-    # return np.load(outfile)
-    res = None
     with open(outfile, 'rb') as f:
-        res = pickle.load(f)
-    return res
+        return pickle.load(f)
 
 
 def copy_array(arr):
@@ -136,7 +132,7 @@ def plot_train_results(results, filepath=None):
     plt.show()
 
 
-def show_distribution(classes, n_classes, title, filepath=None):
+def plot_distribution(classes, n_classes, title, filepath=None):
     plt.figure(figsize=(6, 3))
     plt.title('Distribution for {}'.format(title))
     plt.hist(classes, bins=n_classes)
@@ -290,7 +286,7 @@ print("Number of testing examples =", n_test)
 print("Image data shape =", image_shape)
 print("Number of classes =", n_classes)
 
-show_distribution(y_train, n_classes, 'Train Data')
+plot_distribution(y_train, n_classes, 'Train Data')
 
 datagen = ImageDataGenerator(
     fill_mode='nearest',
@@ -311,25 +307,25 @@ mod_rnd_features = mod_rnd_features.astype(np.uint8)
 
 plot_two_feature_sets(rnd_features, rnd_classes, mod_rnd_features, mod_rnd_classes, title="Original/Augmented")
 
-train_images_enriched_npy = os.path.join(OUTPUT_DIRECTORY, "train_images_enriched.npy")
-train_classes_enriched_npy = os.path.join(OUTPUT_DIRECTORY, "train_classes_enriched.npy")
+train_images_augmented_npy = os.path.join(OUTPUT_DIRECTORY, "train_images_enriched.npy")
+train_classes_augmented_npy = os.path.join(OUTPUT_DIRECTORY, "train_classes_enriched.npy")
 
 
-def generated_samples_available():
-    return os.path.exists(train_images_enriched_npy) and os.path.exists(train_classes_enriched_npy)
+def augmented_data_available():
+    return os.path.exists(train_images_augmented_npy) and os.path.exists(train_classes_augmented_npy)
 
 
-def load_generated_samples():
-    return load_obj(train_images_enriched_npy), load_obj(train_classes_enriched_npy)
+def load_augmented_data():
+    return load_obj(train_images_augmented_npy), load_obj(train_classes_augmented_npy)
 
 
-def save_generated_samples(images):
+def save_augmented_data(images):
     (train_images_enriched, train_classes_enriched) = images
-    save_obj(train_images_enriched, outfile=train_images_enriched_npy)
-    save_obj(train_classes_enriched, outfile=train_classes_enriched_npy)
+    save_obj(train_images_enriched, outfile=train_images_augmented_npy)
+    save_obj(train_classes_enriched, outfile=train_classes_augmented_npy)
 
 
-def validate_generated_data_consistency(in1, in2):
+def validate_augmented_data_consistency(in1, in2):
     (train_images_enriched1, train_classes_enriched1) = in1
     (train_images_enriched2, train_classes_enriched2) = in2
 
@@ -337,7 +333,7 @@ def validate_generated_data_consistency(in1, in2):
     assert np.array_equal(train_classes_enriched1, train_classes_enriched2)
 
 
-def generate_samples(features, classes, unique_classes, unique_classes_size, optimal_class_size=5000):
+def augment_data(features, classes, unique_classes, unique_classes_size, optimal_class_size=5000):
     res_features = copy_array(features)
     res_classes = copy_array(classes)
 
@@ -390,23 +386,23 @@ def generate_samples(features, classes, unique_classes, unique_classes_size, opt
     return res_features, res_classes
 
 
-train_images_enriched = train_classes_enriched = None
-if generated_samples_available():
-    train_images_enriched, train_classes_enriched = load_generated_samples()
+train_images_augmented = train_classes_augmented = None
+if augmented_data_available():
+    train_images_augmented, train_classes_augmented = load_augmented_data()
 else:
-    train_images_enriched, train_classes_enriched = generate_samples(X_train, y_train, unique_classes,
-                                                                     unique_classes_size)
-    save_generated_samples((train_images_enriched, train_classes_enriched))
+    train_images_augmented, train_classes_augmented = augment_data(X_train, y_train, unique_classes,
+                                                                   unique_classes_size)
+    save_augmented_data((train_images_augmented, train_classes_augmented))
 
-print("Validate generated data consistency")
-validate_generated_data_consistency((train_images_enriched, train_classes_enriched), load_generated_samples())
+print("Validate augmented data consistency")
+validate_augmented_data_consistency((train_images_augmented, train_classes_augmented), load_augmented_data())
 print("Done")
 
-show_distribution(y_train, n_classes, 'Train Data')
-show_distribution(train_classes_enriched, n_classes, 'Augmented Data')
+plot_distribution(y_train, n_classes, 'Train Data')
+plot_distribution(train_classes_augmented, n_classes, 'Augmented Data')
 
-# Use enriched training dataset by default
-X_train, y_train = train_images_enriched, train_classes_enriched
+# Use augmented training data by default
+X_train, y_train = train_images_augmented, train_classes_augmented
 
 train_images_normalized_npy = os.path.join(OUTPUT_DIRECTORY, "train_images_normalized.npy")
 valid_images_normalized_npy = os.path.join(OUTPUT_DIRECTORY, "valid_images_normalized.npy")
@@ -615,7 +611,25 @@ def train_model(train_features, train_classes, valid_features, valid_classes, mo
         return desc, np.array(results).T
 
 
-def calc_top_k(new_features, new_classes, model_config, top_k_value=5,
+def evaluate_model(in_features, in_classes, model_config,
+                   keep_prob_value=1.0, model_name="lenet", desc=None, output_dir=OUTPUT_DIRECTORY):
+    print("Evaluate model {}".format(model_name))
+
+    if desc is None:
+        desc = model_name
+
+    model_file = os.path.join(output_dir, model_name)
+
+    x, y, keep_prob, logits, training_operation, accuracy_operation, cnn_params = model_config()
+    saver = tf.train.Saver()
+
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        saver.restore(sess, model_file)
+        return evaluate(in_features, in_classes, accuracy_operation, x, y, keep_prob, keep_prob_value)
+
+
+def calc_top_k(in_features, in_classes, model_config, top_k_value=5,
                keep_prob_value=1.0, model_name="lenet", desc=None, output_dir=OUTPUT_DIRECTORY):
     print("Calculate top_k model {}".format(model_name))
 
@@ -632,11 +646,11 @@ def calc_top_k(new_features, new_classes, model_config, top_k_value=5,
         saver.restore(sess, model_file)
         sess = tf.get_default_session()
         top_k_results = sess.run(tf.nn.top_k(tf.nn.softmax(logits), top_k_value),
-                                 feed_dict={x: new_features, keep_prob: keep_prob_value})
+                                 feed_dict={x: in_features, keep_prob: keep_prob_value})
         return top_k_results
 
 
-def calc_probability(new_features, new_classes, model_config,
+def calc_probability(in_features, in_classes, model_config,
                      keep_prob_value=1.0, model_name="lenet", desc=None, output_dir=OUTPUT_DIRECTORY):
     print("Calculate probability model {}".format(model_name))
 
@@ -652,8 +666,9 @@ def calc_probability(new_features, new_classes, model_config,
         sess.run(tf.global_variables_initializer())
         saver.restore(sess, model_file)
         sess = tf.get_default_session()
-        predicted_classes = sess.run(tf.argmax(logits, 1), feed_dict={x: new_features, keep_prob: keep_prob_value})
-        assert new_classes.shape == predicted_classes.shape
+        predicted_classes = sess.run(tf.argmax(logits, 1),
+                                     feed_dict={x: in_features, y: in_classes, keep_prob: keep_prob_value})
+        assert in_classes.shape == predicted_classes.shape
         return predicted_classes
 
 
@@ -704,12 +719,16 @@ def plot_confusion_matrix(cm):
     plt.show()
 
 
-def print_confusion_matrix(cm, orig_classes, catalog=classes_catalog, order_desc=False):
+def print_confusion_matrix(cm, cm_index_labels=None, classes_catalog=classes_catalog, order_desc=False):
     results = []
-    for i, row in enumerate(cm):
-        accuracy = round(row[i] / sum(row) * 100, 2)
-        class_id = orig_classes[i]
-        class_name = catalog[orig_classes[i]]
+    for idx, row in enumerate(cm):
+        accuracy = round(row[idx] / sum(row) * 100, 2)
+        class_id = None
+        if cm_index_labels is not None:
+            class_id = cm_index_labels[idx]
+        else:
+            class_id = idx
+        class_name = classes_catalog[class_id]
         results.append((accuracy, class_id, class_name))
 
     total_accuracy = []
@@ -748,22 +767,19 @@ train_features_predicted_classes = calc_probability(train_images_normalized, y_t
                                                     model_config=model_multi_dropouts_before45_config,
                                                     desc="NDR 45 Grayscale normalized (Train)",
                                                     model_name="ndr45_train_images_normalized_model")
-
-print_confusion_matrix(confusion_matrix(y_train, train_features_predicted_classes), y_train, order_desc=True)
+print_confusion_matrix(confusion_matrix(y_train, train_features_predicted_classes), order_desc=True)
 
 valid_features_predicted_classes = calc_probability(valid_images_normalized, y_valid,
                                                     model_config=model_multi_dropouts_before45_config,
                                                     desc="NDR 45 Grayscale normalized (Valid)",
                                                     model_name="ndr45_train_images_normalized_model")
-
-print_confusion_matrix(confusion_matrix(y_valid, valid_features_predicted_classes), y_valid, order_desc=True)
+print_confusion_matrix(confusion_matrix(y_valid, valid_features_predicted_classes), order_desc=True)
 
 test_features_predicted_classes = calc_probability(test_images_normalized, y_test,
                                                    model_config=model_multi_dropouts_before45_config,
                                                    desc="NDR 45 Grayscale normalized (Test)",
                                                    model_name="ndr45_train_images_normalized_model")
-
-print_confusion_matrix(confusion_matrix(y_test, test_features_predicted_classes), y_test, order_desc=True)
+print_confusion_matrix(confusion_matrix(y_test, test_features_predicted_classes), order_desc=True)
 plot_confusion_matrix(confusion_matrix(y_test, test_features_predicted_classes))
 
 new_features_with_classes = [(resize_image(read_image(path)), int(basename(path).split(".")[-2])) for path in
@@ -798,7 +814,10 @@ new_features_predicted_classes = calc_probability(new_features_normalized,
                                                   desc="NDR 45 Grayscale normalized (New Images)",
                                                   model_name="ndr45_train_images_normalized_model")
 
-print_confusion_matrix(confusion_matrix(new_classes, new_features_predicted_classes), new_classes, order_desc=True)
+# cm_index_labels need to lookup for real class_id in confusion matrix
+# see: http://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html
+print_confusion_matrix(confusion_matrix(new_classes, new_features_predicted_classes, labels=new_classes),
+                       cm_index_labels=new_classes, order_desc=True)
 
 
 def plot_top_k(in_features, in_classes, top_k):
