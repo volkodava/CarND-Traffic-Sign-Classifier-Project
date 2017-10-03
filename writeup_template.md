@@ -175,14 +175,18 @@ Here are the results of the prediction:
 
 | Image			        |     Prediction	        					| 
 |:---------------------:|:---------------------------------------------:| 
-| Speed limit (30km/h)  | Speed limit (30km/h)  						| 
-| Stop       			| Stop  										|
-| No vehicles			| No vehicles									|
-| Turn left ahead  		| Turn left ahead				 				|
+| Yield                 | Yield  		                				| 
+| General caution       | General caution 	            				|
+| Slippery road			| Slippery road									|
+| Road work  		    | Bumpy road			 				        |
+| Traffic signals	    | No vehicles 						            |
+| Speed limit (60km/h)	| Speed limit (60km/h)   						|
+| Turn left ahead	    | Turn left ahead   							|
 | Speed limit (70km/h)	| Speed limit (70km/h) 							|
 
 
-The model was able to correctly guess 5 of the 5 traffic signs, which gives an accuracy of 100% - even better than the 97.12% validation accuracy and the 94.443% test accuracy. This is a good sign that the model performs well on real-world data. And while it's reasonable to assume that the accuracy would not remain so high given more data points, judging by the low fidelity of a number of images in the training dataset it's also reasonable to assume that if the real-world data were all as easily distinguishable as the six images chosen that the accuracy would remain very high.
+The model was able to correctly guess 6 of the 8 traffic signs, which gives an accuracy of 75%. This is lower than the test accuracy of 94%. Although model failed on the image class 25 because significant part of traffic sign is covered with snow the correct prediction is in top 5 list. The image class 26 is too skewed for the model to make a proper prediction.
+
 
 #### 3. Describe how certain the model is when predicting on each of the five new images by looking at the softmax probabilities for each prediction. Provide the top 5 softmax probabilities for each image along with the sign type of each probability. (OPTIONAL: as described in the "Stand Out Suggestions" part of the rubric, visualizations can also be provided such as bar charts)
 

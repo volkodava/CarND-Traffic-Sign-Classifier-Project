@@ -12,6 +12,7 @@ from urllib.request import urlretrieve
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+import sklearn
 import tensorflow as tf
 from keras.preprocessing.image import ImageDataGenerator
 from skimage import exposure
@@ -129,7 +130,7 @@ def plot_train_results(results, filepath=None):
         plt.savefig(filepath, bbox_inches='tight')
 
     plt.tight_layout()
-    plt.show()
+    # plt.show()
 
 
 def plot_distribution(classes, n_classes, title, filepath=None):
@@ -140,7 +141,7 @@ def plot_distribution(classes, n_classes, title, filepath=None):
         plt.savefig(filepath, bbox_inches='tight')
 
     plt.tight_layout()
-    plt.show()
+    # plt.show()
 
 
 def plot_features(features, classes=None, cols=None, squeeze=True, title=None, filepath=None):
@@ -178,7 +179,7 @@ def plot_features(features, classes=None, cols=None, squeeze=True, title=None, f
         plt.savefig(filepath, bbox_inches='tight')
 
     plt.tight_layout()
-    plt.show()
+    # plt.show()
 
 
 def filter_by_class_id(features, classes, class_id):
@@ -286,7 +287,7 @@ print("Number of testing examples =", n_test)
 print("Image data shape =", image_shape)
 print("Number of classes =", n_classes)
 
-plot_distribution(y_train, n_classes, 'Train Data')
+# plot_distribution(y_train, n_classes, 'Train Data')
 
 datagen = ImageDataGenerator(
     fill_mode='nearest',
@@ -305,7 +306,7 @@ mod_rnd_features, mod_rnd_classes = datagen.flow(rnd_features, rnd_classes, batc
                                                  shuffle=False).next()
 mod_rnd_features = mod_rnd_features.astype(np.uint8)
 
-plot_two_feature_sets(rnd_features, rnd_classes, mod_rnd_features, mod_rnd_classes, title="Original/Augmented")
+# plot_two_feature_sets(rnd_features, rnd_classes, mod_rnd_features, mod_rnd_classes, title="Original/Augmented")
 
 train_images_augmented_npy = os.path.join(OUTPUT_DIRECTORY, "train_images_enriched.npy")
 train_classes_augmented_npy = os.path.join(OUTPUT_DIRECTORY, "train_classes_enriched.npy")
@@ -398,8 +399,8 @@ print("Validate augmented data consistency")
 validate_augmented_data_consistency((train_images_augmented, train_classes_augmented), load_augmented_data())
 print("Done")
 
-plot_distribution(y_train, n_classes, 'Train Data')
-plot_distribution(train_classes_augmented, n_classes, 'Augmented Data')
+# plot_distribution(y_train, n_classes, 'Train Data')
+# plot_distribution(train_classes_augmented, n_classes, 'Augmented Data')
 
 # Use augmented training data by default
 X_train, y_train = train_images_augmented, train_classes_augmented
@@ -491,11 +492,11 @@ print("Done")
 classes_to_plot = 2
 for idx in range(classes_to_plot):
     feature_class_id = unique_classes[idx]
-    plot_first_n_features(X_train, y_train, feature_class_id,
-                          title="Original. {} - {}".format(feature_class_id, classes_catalog[feature_class_id]))
-    plot_first_n_features(train_images_normalized, y_train, feature_class_id,
-                          title="Grayscale normalized. {} - {}".format(feature_class_id,
-                                                                       classes_catalog[feature_class_id]))
+    # plot_first_n_features(X_train, y_train, feature_class_id,
+    #                       title="Original. {} - {}".format(feature_class_id, classes_catalog[feature_class_id]))
+    # plot_first_n_features(train_images_normalized, y_train, feature_class_id,
+    #                       title="Grayscale normalized. {} - {}".format(feature_class_id,
+    #                                                                    classes_catalog[feature_class_id]))
 
 EPOCHS = 20
 BATCH_SIZE = 128
@@ -708,10 +709,10 @@ def plot_confusion_matrix(cm):
     plt.title('Confusion Matrix')
     plt.xlabel('Predicted Classes')
     plt.ylabel('True Classes')
-    plt.show()
+    # plt.show()
 
 
-def print_confusion_matrix(cm, cm_index_labels=None, classes_catalog=classes_catalog, order_desc=False):
+def process_confusion_matrix(cm, cm_index_labels=None, classes_catalog=classes_catalog, order_desc=False):
     results = []
     for idx, row in enumerate(cm):
         accuracy = round(row[idx] / sum(row) * 100, 2)
@@ -723,14 +724,35 @@ def print_confusion_matrix(cm, cm_index_labels=None, classes_catalog=classes_cat
         class_name = classes_catalog[class_id]
         results.append((accuracy, class_id, class_name))
 
+    return sorted(results, key=lambda x: x[0], reverse=order_desc)
+
+
+def print_confusion_matrix_results(cm_results):
     total_accuracy = []
-    for result in sorted(results, key=lambda x: x[0], reverse=order_desc):
+    for result in cm_results:
         (accuracy, class_id, class_name) = result
         print('{}% - {} / {}'.format(accuracy, class_id, class_name))
         total_accuracy.append(accuracy)
 
     print("Accuracy: Mean: {}% Std: {}".format(np.around(np.mean(total_accuracy), decimals=3),
                                                np.around(np.std(total_accuracy), decimals=3)))
+
+
+def plot_top_k_worst_confusion_matrix_results(features_cm_sorted, in_features=X_test, in_classes=y_test, top_k=10,
+                                              title="Top K Worst Features"):
+    test_features_to_plot = []
+    test_classes_to_plot = []
+    for accuracy, class_id, class_name in features_cm_sorted[-top_k:]:
+        class_indexes = np.where(in_classes == class_id)[0]
+        rnd_class_id = np.random.randint(0, len(class_indexes))
+        feature = in_features[class_indexes][rnd_class_id].squeeze()
+        test_features_to_plot.append(feature)
+        test_classes_to_plot.append(class_id)
+
+    test_features_to_plot = np.array(test_features_to_plot)
+    test_classes_to_plot = np.array(test_classes_to_plot)
+
+    plot_features(test_features_to_plot, test_classes_to_plot, title=title)
 
 
 train_setups = [
@@ -753,31 +775,31 @@ else:
 
 print("Done")
 
-plot_train_results(results, os.path.join(OUTPUT_DIRECTORY, "train_results.png"))
+# plot_train_results(results, os.path.join(OUTPUT_DIRECTORY, "train_results.png"))
 
 train_features_predicted_classes = calc_probability(train_images_normalized, y_train,
                                                     model_config=model_multi_dropouts_before45_config,
                                                     desc="NDR 45 Grayscale normalized (Train)",
                                                     model_name="ndr45_train_images_normalized_model")
 train_features_cm = confusion_matrix(y_train, train_features_predicted_classes)
-print_confusion_matrix(train_features_cm, order_desc=True)
-plot_confusion_matrix(train_features_cm)
+print_confusion_matrix_results(process_confusion_matrix(train_features_cm, order_desc=True))
+# plot_confusion_matrix(train_features_cm)
 
 valid_features_predicted_classes = calc_probability(valid_images_normalized, y_valid,
                                                     model_config=model_multi_dropouts_before45_config,
                                                     desc="NDR 45 Grayscale normalized (Valid)",
                                                     model_name="ndr45_train_images_normalized_model")
 valid_features_cm = confusion_matrix(y_valid, valid_features_predicted_classes)
-print_confusion_matrix(valid_features_cm, order_desc=True)
-plot_confusion_matrix(valid_features_cm)
+print_confusion_matrix_results(process_confusion_matrix(valid_features_cm, order_desc=True))
+# plot_confusion_matrix(valid_features_cm)
 
 test_features_predicted_classes = calc_probability(test_images_normalized, y_test,
                                                    model_config=model_multi_dropouts_before45_config,
                                                    desc="NDR 45 Grayscale normalized (Test)",
                                                    model_name="ndr45_train_images_normalized_model")
 test_features_cm = confusion_matrix(y_test, test_features_predicted_classes)
-print_confusion_matrix(test_features_cm, order_desc=True)
-plot_confusion_matrix(test_features_cm)
+processed_test_features_cm = process_confusion_matrix(test_features_cm, order_desc=True)
+print_confusion_matrix_results(processed_test_features_cm)
 
 new_features_with_classes = [(resize_image(read_image(path)), int(basename(path).split(".")[-2])) for path in
                              glob.glob('images/*.jpg')]
@@ -787,12 +809,12 @@ new_classes = np.array(new_classes)
 
 assert new_features.shape[1:] == X_train.shape[1:]
 
-plot_features(new_features.astype(np.uint8), new_classes, title="Random Images")
+# plot_features(new_features.astype(np.uint8), new_classes, title="Random Images")
 
 new_features_normalized = normalize_images(new_features)
 
-plot_features(new_features.astype(np.uint8), new_classes, title="Original Images")
-plot_features(new_features_normalized, new_classes, title="Normalized Images")
+# plot_features(new_features.astype(np.uint8), new_classes, title="Original Images")
+# plot_features(new_features_normalized, new_classes, title="Normalized Images")
 
 new_features_predicted_classes = calc_probability(new_features_normalized,
                                                   new_classes,
@@ -800,11 +822,17 @@ new_features_predicted_classes = calc_probability(new_features_normalized,
                                                   desc="NDR 45 Grayscale normalized (New Images)",
                                                   model_name="ndr45_train_images_normalized_model")
 
-# cm_index_labels need to lookup for real class_id in confusion matrix
-# see: http://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html
-new_features_cm = confusion_matrix(new_classes, new_features_predicted_classes, labels=new_classes)
-print_confusion_matrix(new_features_cm, cm_index_labels=new_classes, order_desc=True)
-plot_confusion_matrix(new_features_cm)
+for original_class_id, predicted_class_id in zip(new_classes, new_features_predicted_classes):
+    correct = False
+    if original_class_id == predicted_class_id:
+        correct = True
+    print(
+        "{} - {}: {}".format(original_class_id, classes_catalog[original_class_id],
+                             "Ok" if correct else "FAILED"))
+    if not correct:
+        print(", predicted as: {} - {}".format(predicted_class_id, classes_catalog[predicted_class_id]))
+print(
+    "Accuracy: {}%".format(round(sklearn.metrics.accuracy_score(new_features_predicted_classes, new_classes) * 100, 2)))
 
 
 def plot_top_k(in_features, in_classes, top_k):
@@ -838,7 +866,7 @@ def plot_top_k(in_features, in_classes, top_k):
                 axs[index].set_title('Original: {}'.format(class_id))
             else:
                 axs[index].set_title('Predicted: {} ({:.0f}%)'.format(class_id, predicted_prcnt))
-    plt.show()
+                # plt.show()
 
 
 top_k_results = calc_top_k(new_features_normalized, new_classes,
@@ -846,7 +874,8 @@ top_k_results = calc_top_k(new_features_normalized, new_classes,
                            desc="NDR 45 Grayscale normalized (New Images)",
                            model_name="ndr45_train_images_normalized_model")
 
-plot_top_k(new_features_normalized, new_classes, top_k_results)
+
+# plot_top_k(new_features_normalized, new_classes, top_k_results)
 
 
 ### Visualize your network's feature maps here.
@@ -879,7 +908,7 @@ def outputFeatureMap(sess, x, keep_prob, keep_prob_value, image_input, tf_activa
             plt.imshow(activation[0, :, :, featuremap], interpolation="nearest", vmin=activation_min, cmap="gray")
         else:
             plt.imshow(activation[0, :, :, featuremap], interpolation="nearest", cmap="gray")
-    plt.show()
+            # plt.show()
 
 
 def plot_feature_map(in_features, in_classes, model_config,
@@ -906,12 +935,12 @@ def plot_feature_map(in_features, in_classes, model_config,
 first_feature = new_features_normalized[0]
 first_feature_class = new_classes[0]
 
-plot_features(np.array([first_feature.squeeze()]), np.array([first_feature_class]), squeeze=False, title="Input")
-plot_feature_map(np.array([first_feature]), np.array([first_feature_class]),
-                 model_config=model_multi_dropouts_before45_config,
-                 desc="Untrained Model",
-                 model_name="ndr45_train_images_normalized_model", load_model=False, conv_name="conv1")
-plot_feature_map(np.array([first_feature]), np.array([first_feature_class]),
-                 model_config=model_multi_dropouts_before45_config,
-                 desc="Trained Model",
-                 model_name="ndr45_train_images_normalized_model", conv_name="conv1")
+# plot_features(np.array([first_feature.squeeze()]), np.array([first_feature_class]), squeeze=False, title="Input")
+# plot_feature_map(np.array([first_feature]), np.array([first_feature_class]),
+#                  model_config=model_multi_dropouts_before45_config,
+#                  desc="Untrained Model",
+#                  model_name="ndr45_train_images_normalized_model", load_model=False, conv_name="conv1")
+# plot_feature_map(np.array([first_feature]), np.array([first_feature_class]),
+#                  model_config=model_multi_dropouts_before45_config,
+#                  desc="Trained Model",
+#                  model_name="ndr45_train_images_normalized_model", conv_name="conv1")
